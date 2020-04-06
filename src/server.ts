@@ -29,23 +29,25 @@ app.use(bodyParser.json({ strict: false, type: req => true }));
 
 // Documentation about docker volume plugins can be found here: https://docs.docker.com/engine/extend/plugins_volume/
 
-app.post("/Plugin.Activate", async (request, response) => {
-    console.log("Activating nfs volume driver");
+let nfsMounted = false;
+
+async function mountNfs() {
+    console.log("First use; mounting nfs share");
 
     if (!server) {
-        return response.json({ Err: "NFS_SERVER is required" });
+        throw new Error("NFS_SERVER is required");
     }
 
     if (!path) {
-        return response.json({ Err: "NFS_PATH is required" });
+        throw new Error("NFS_PATH is required");
     }
 
-    try {
-        await nfs.mount()
-    }
-    catch (error) {
-        return response.json({ Err: error.message });
-    }
+    await nfs.mount()
+    nfsMounted = true;
+}
+
+app.post("/Plugin.Activate", async (request, response) => {
+    console.log("Activating nfs volume driver");
 
     response.json({
         "Implements": ["VolumeDriver"]
@@ -59,6 +61,8 @@ app.post("/Plugin.Activate", async (request, response) => {
 */
 app.post("/VolumeDriver.Create", async (request, response) => {
     const req = request.body as { Name: string, Opts: {  } };
+
+    if (!nfsMounted) mountNfs();
 
     console.log(`Creating nfs volume ${req.Name}`);
 
@@ -80,6 +84,8 @@ app.post("/VolumeDriver.Create", async (request, response) => {
 */
 app.post("/VolumeDriver.Remove", async (request, response) => {
     const req = request.body as { Name: string };
+
+    if (!nfsMounted) mountNfs();
 
     console.log(`Removing nfs volume ${req.Name}`);
 
@@ -105,6 +111,8 @@ app.post("/VolumeDriver.Mount", async (request, response) => {
     const req = request.body as { Name: string, ID: string };
     const mountPoint = nfs.getMountPoint(req.Name);
 
+    if (!nfsMounted) mountNfs();
+
     console.log(`Mounting nfs volume ${req.Name}, this is a no_op`);
 
     response.json({
@@ -119,6 +127,8 @@ app.post("/VolumeDriver.Mount", async (request, response) => {
 app.post("/VolumeDriver.Path", (request, response) => {
     const req = request.body as { Name: string };
     const mountPoint = nfs.getMountPoint(req.Name);
+
+    if (!nfsMounted) mountNfs();
 
     console.log(`Request path of nfs mount ${req.Name}`);
 
@@ -137,6 +147,8 @@ app.post("/VolumeDriver.Path", (request, response) => {
 app.post("/VolumeDriver.Unmount", async (request, response) => {
     const req = request.body as { Name: string, ID: string };
 
+    if (!nfsMounted) mountNfs();
+
     console.log(`Unmounting nfs volume ${req.Name}, this is a no_op`);
 
     response.json({
@@ -150,6 +162,8 @@ app.post("/VolumeDriver.Unmount", async (request, response) => {
 app.post("/VolumeDriver.Get", async (request, response) => {
     const req = request.body as { Name: string };
     const mountPoint = nfs.getMountPoint(req.Name);
+
+    if (!nfsMounted) mountNfs();
 
     console.log(`Getting info about nfs volume ${req.Name}`);
 
@@ -181,6 +195,8 @@ app.post("/VolumeDriver.Get", async (request, response) => {
 app.post("/VolumeDriver.List", async (request, response) => {
     console.log("Getting list of registered nfs volumes");
 
+    if (!nfsMounted) mountNfs();
+
     try {
         const nfsList = await nfs.list();
 
@@ -201,6 +217,8 @@ app.post("/VolumeDriver.List", async (request, response) => {
 
 app.post("/VolumeDriver.Capabilities", (request, response) => {
     console.log("Getting the list of capabilities");
+
+    if (!nfsMounted) mountNfs();
 
     response.json({
         Capabilities: {
