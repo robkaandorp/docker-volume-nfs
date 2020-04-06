@@ -210,23 +210,29 @@ app.post("/VolumeDriver.Capabilities", (request, response) => {
 });
 
 
-app.listen(socketAddress, err => {
+const expressServer = app.listen(socketAddress, err => {
     if (err) {
         return console.error(err);
     }
 
     console.log(`Plugin nfs listening on socket ${socketAddress}`);
-}).close(err => {
-    console.error(err);
-    
+});
+
+expressServer.on("close", () => {
     console.log("Plugin nfs stopping, unmounting share");
 
     try {
-        nfs.unmount();
+        if (server && path) {
+            nfs.unmount();
+        }
     }
     catch (error) {
         console.error(`Unmount failed: ${error.message}`);
     }
 
     console.log("Plugin nfs stopped.")
+});
+
+process.on('SIGINT', function() {
+    expressServer.close();
 });
