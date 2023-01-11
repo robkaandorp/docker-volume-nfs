@@ -1,12 +1,12 @@
 FROM centos AS base
-RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
+RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
 RUN yum install -y nodejs nfs-utils
 RUN yum clean packages && yum clean metadata && yum clean all && rm -rf /var/cache/dnf
 
 FROM base AS builder
 COPY . /app
 WORKDIR /app
-RUN npm install
+RUN npm ci
 RUN npx tsc
 RUN npm prune --production
 
