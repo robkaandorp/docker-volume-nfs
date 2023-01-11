@@ -1,0 +1,34 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: "${{ vars.VERSION_TAG }}.${{ github.run_number }}"
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag robkaandorp/nfs:${{ vars.VERSION_TAG }} --tag robkaandorp/nfs:${{ env.RELEASE_VERSION }} --tag robkaandorp/nfs:latest
+    - name: Export image
+      run: |
+        id=$(docker create robkaandorp/nfs:${{ vars.VERSION_TAG }} true)
+        mkdir -p plugin/rootfs
+        cp config.json plugin/
+        docker export "$id" | sudo tar -x -C plugin/rootfs
+        docker rm -vf "$id"
+        docker rmi robkaandorp/nfs:${{ vars.VERSION_TAG }}
+    - name: Create tar archive
+      run: sudo tar -czf docker-volume-nfs-${{ env.RELEASE_VERSION }}.tgz plugin/
+    - name: GitHub release
+      run: |
+        echo ${{ github.token }} | gh auth login --with-token
+        gh release create ${{ env.RELEASE_VERSION }} *.tgz
