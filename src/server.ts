@@ -228,11 +228,7 @@ app.post("/VolumeDriver.Capabilities", (request, response) => {
 });
 
 
-const expressServer = app.listen(socketAddress, err => {
-    if (err) {
-        return console.error(err);
-    }
-
+const expressServer = app.listen(socketAddress, () => {
     console.log(`Plugin nfs listening on socket ${socketAddress}`);
 });
 

@@ -1,7 +1,8 @@
-FROM centos AS base
+FROM rockylinux:9-minimal AS base
 RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
-RUN yum install -y nodejs nfs-utils
-RUN yum clean packages && yum clean metadata && yum clean all && rm -rf /var/cache/dnf
+RUN microdnf install -y nodejs nfs-utils
+RUN microdnf clean all
+RUN npm update -g
 
 FROM base AS builder
 COPY . /app
