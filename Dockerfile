@@ -1,5 +1,4 @@
 FROM rockylinux:9-minimal AS base
-RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
 RUN microdnf install -y nodejs nfs-utils
 RUN microdnf clean all
 RUN npm update -g
