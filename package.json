@@ -24,9 +24,9 @@
   "homepage": "https://github.com/robkaandorp/docker-volume-nfs#readme",
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "typescript": "^5.4.4"
+    "typescript": "^5.6.2"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.21.0"
   }
 }
